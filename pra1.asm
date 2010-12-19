@@ -2,8 +2,7 @@ org 100h
 
 start:
   call setupDraw
-  mov al,4    ; color 4 - red
-  jmp drawLoop
+  jmp keyDrawLoop
 
 
 setupDraw:
@@ -13,24 +12,31 @@ setupDraw:
   mov dx,100  ; y position = 100
   ret
   
-drawLoop:
-  xor ah,ah
-  int 16h
-  mov al,4    ; color 4 - red
+keyDrawLoop:
+  push ax     ; preserving al's value
+  xor ah,ah   
+  int 16h     ; getting a key press value on ax
+  pop bx      ; popping previous ax's value on bx's
+  mov al, bl  ; moving bx's first 8bits (colour), back onto al
+              ; that overwrites al's ascii value so we use scancodes
+              ; to access the value of the key pressed
+              
   cmp ah,1    ; if key == esc
   je  finishDraw
-  
-  cmp ah,'r'
-  je  setColourRed
-  cmp ah,'g'
-  je  setColourGreen
-  cmp ah,'b'
-  je  setColourBlue
+  cmp ah,13h  ; scancode for r
+  je  setColourRedKey
+  cmp ah,22h  ; scancode for g
+  je  setColourGreenKey
+  cmp ah,30h  ; scancode for b
+  je  setColourBlueKey
   ;cmp ah,1Ch  ; enter key
   ;je  next_generation
   ;cmp ah,39h  ; spacebar
   ;je  switch_cell
-  cmp ah,4Bh  ; if left key
+  jmp drawKeys
+  
+drawKeys:  
+  cmp ah,4Bh  ; if left keyk
   je  drawKeyLeft
   cmp ah,4Dh  ; if right key
   je  drawKeyRight
@@ -38,37 +44,53 @@ drawLoop:
   je  drawKeyUp
   cmp ah,50h  ; if down key
   je  drawKeyDown
-  jmp drawLoop ;else, do the same again
-  
+  jmp keyDrawLoop ;else, do the same again
+
+
+
+setColourRedKey:
+  call setColourRed
+  jmp drawKeys
+
+setColourBlueKey:
+  call setColourBlue
+  jmp drawKeys
+
+setColourGreenKey:
+  call setColourGreen
+  jmp drawKeys
+
 setColourRed:
   mov al,4
-  jmp drawLoop
+  ret
 
 setColourBlue:
   mov al,1
-  jmp drawLoop
+  ret
   
 setColourGreen:
   mov al,10
-  jmp drawLoop
+  ret
   
+; ============ Specific Calls for Drawing with each Key
+
 drawKeyUp:
   call drawUp
-  jmp drawLoop
+  jmp keyDrawLoop
 
 drawKeyLeft:
   call drawLeft
-  jmp drawLoop
+  jmp keyDrawLoop
   
 drawKeyDown:
   call drawDown
-  jmp drawLoop
+  jmp keyDrawLoop
   
 drawKeyRight:
   call drawRight
-  jmp drawLoop
+  jmp keyDrawLoop
 
-; ============ Setting Draw Functions
+; ============ Specific Draw Functions
 ; all functions receive
 ;
 ; al register: colour
@@ -76,35 +98,35 @@ drawKeyRight:
 ; dx register: ypos
 
 drawUp:
-  ;push ax     ; preserve the original value of ah
+  push ax     ; preserve the original value of ah
   mov ah,0Ch  ; function 0Ch
   dec dx      ; increment "y" position
   int 10h     ; call interruption and draw
-  ;pop ax      ; restore ah's original value
+  pop ax      ; restore ah's original value
   ret
 
 drawDown:
-  ;push ax
+  push ax
   mov ah,0Ch 
   inc dx 
   int 10h 
-  ;pop ax
+  pop ax
   ret
 
 drawLeft:
-  ;push ax
+  push ax
   mov ah,0Ch 
   dec cx 
   int 10h 
-  ;pop ax
+  pop ax
   ret
 
 drawRight:
-  ;push ax
+  push ax
   mov ah,0Ch
   inc cx
   int 10h
-  ;pop ax
+  pop ax
   ret
 
 finishDraw:
