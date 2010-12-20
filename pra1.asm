@@ -1,6 +1,92 @@
 org 100h
+use16
 
 start:
+  mov ah,00h  ; cleaning up the screen
+  mov al,03h  ; 
+  int 10h
+  
+  ; showing welcome message
+  mov ah,9h
+  mov dx,WelcomeMsg
+  int 21h
+  
+  
+  
+  jmp waitNumbers
+  
+; ============ Start Calculator
+
+waitNumbers:
+  mov ah,00h
+  int 16h
+  ;echo
+  mov ah, 0eh
+  int 10h
+  ; operate when when keys get pressed
+  cmp al,27       ;salir con q
+  je  exitProgram
+  cmp al,'+'      ;detectar suma
+  je  Sum
+  cmp al,'-'      ;detectar resta
+  je  Minus
+  cmp al,'*'      ;detectar multiplicacion
+  je  Mult
+  cmp al,'/'      ;detectar division
+  je  Divi
+  cmp al,13       ;operar
+  je  Operar
+  ;check if number
+  mov cl,al
+  push    cx      ;guardar el numero a la pila
+  sub al, 40h     ;ver si es numero
+  cmp al, 0
+  jge CalcError
+
+  jmp waitNumbers ;esperar siguiente numero o tecla
+
+Sum:
+  ;acciones para sumar cosas
+  pop cx
+  add al,cl
+  int 21h
+  jmp waitNumbers
+
+Minus:
+  ;acciones para restar cosas
+  pop cx
+  sub al,cl
+  jmp waitNumbers
+
+Mult:
+  ;acciones para multiplicar cosas
+  pop cx
+  ;mul    al,cl 
+  jmp waitNumbers
+
+Divi:
+  ;acciones para dividir cosas
+  pop cx
+  ;div    al,cl
+  jmp waitNumbers
+
+Operar:
+  ;acciones para operar
+  pop cx
+  mov ah,09h
+  mov dx,OperationEx
+  int 21h
+  jmp waitNumbers
+
+CalcError:
+  mov ah,09h
+  mov dx,NotNumError
+  int 21h
+  jmp waitNumbers
+
+; ==================== End Calculator
+
+startDrawing:
   call setupDraw
   call fileOpenForWriting
   jmp keyDrawLoop
@@ -190,6 +276,11 @@ exitProgram:
 
 CR equ 13
 LF equ 10
+
+Num          db ?  
+OperationEx  db "operacion realizada:",CR,LF,"$"
+WelcomeMsg   db "Practica 1, Arqui 1",CR,LF,"1. Calculadora",CR,LF,"2. Dibujar",CR,LF,"3. Cargar Dibujado","$"
+NotNumError  db CR,LF,"esto no es un numero",CR,LF,"$"
 
 CreateErrorMessage DB "Error While Creating File $"
 OpenErrorMessage   DB "Error While Opening File $"
