@@ -133,6 +133,7 @@ fileOpenForWriting:
               
 setupDraw:
   mov ax,13   ; mode = 13h 
+  xor ah, ah
   int 10h     ; call bios service
   mov cx,160  ; x position = 160
   mov dx,100  ; y position = 100
