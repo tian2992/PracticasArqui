@@ -69,13 +69,13 @@ Minus:
 Mult:
   ;acciones para multiplicar cosas
   pop cx
-  ;mul    al,cl 
+  mul cl   ;al,cl 
   jmp waitNumbers
 
 Divi:
   ;acciones para dividir cosas
   pop cx
-  ;div    al,cl
+  div cl ; al,cl
   jmp waitNumbers
 
 Operar:
