@@ -18,6 +18,8 @@ menu:
   je waitNumbers
   cmp al,'2'
   je startDrawing
+  cmp al,'3'
+  je readFile
   cmp al,'4'
   je exitProgram
   
@@ -91,6 +93,73 @@ CalcError:
   mov dx,NotNumError
   int 21h
   jmp waitNumbers
+  
+; ==================== File Loading Section
+readFile:
+call openFile
+call exit
+ret       
+;-****************************
+exit:
+mov ax,4C00h ; exit to DOS
+int 21h 
+ret  
+;******************************    
+openFile:
+call saveRegisters 
+MOV AL, 0                   ;codigo de Acceso para solo lectura
+MOV DX,   FileName               ;En DX se coloca el nombre del archivo, si todo salio bien se tiene el nom del arch.
+MOV AH, 3DH
+mov [FileHandle], ax                 ;se llama la funcion 3dh de la int 21
+INT 21H
+JC   loadRegisters
+ret
+
+readWord:
+;Esta rutina lee un byte del archivo abierto con Abrir_Archivo, lo retorna
+;en AL, AX = -1 si se termino el archivo.
+;;**********
+   call saveRegisters
+   MOV  AH, 3FH
+   MOV  BX,[FileHandle]
+   MOV  CX, 1
+   MOV  DX,  string
+   PUSH CS
+   POP  DS
+   INT  21h
+   JC   loadRegisters
+    CMP AX, 0
+    JNE notEOF
+        MOV AH, 3EH
+                         ;Fin de archivo. Cerrarlo y poner
+        MOV BX, [FileHandle] ;AX en -1.
+        INT 21h
+        MOV AX, -1
+        JMP loadRegisters
+    
+ret 
+ ;**************
+ 
+notEOF:
+    MOV Ax, string
+    cmp al,41h
+    ret          
+            
+                 
+loadRegisters:
+pop ax
+pop bx
+pop cx
+pop dx
+ret
+saveRegisters:
+push ax
+push bx
+push cx
+push dx
+ret
+  
+  
 
 ; ==================== Start Drawing
 
@@ -427,3 +496,5 @@ UpToWrite    DB "1",0
 RightToWrite DB "2",0
 DownToWrite  DB "3",0
 LeftToWrite  DB "4",0
+
+string DB 80 DUP (?) 
