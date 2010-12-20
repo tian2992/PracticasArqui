@@ -4,16 +4,24 @@ use16
 start:
   mov ah,00h  ; cleaning up the screen
   mov al,03h  ; 
-  int 10h
+  int 10h     ;
   
-  ; showing welcome message
   mov ah,9h
   mov dx,WelcomeMsg
   int 21h
+  jmp menu
   
+menu:
+  xor ah,ah
+  int 16h
+  cmp al,'1'
+  je waitNumbers
+  cmp al,'2'
+  je startDrawing
+  cmp al,'4'
+  je exitProgram
   
-  
-  jmp waitNumbers
+  jmp menu ;else we repeat again
   
 ; ============ Start Calculator
 
@@ -84,7 +92,7 @@ CalcError:
   int 21h
   jmp waitNumbers
 
-; ==================== End Calculator
+; ==================== Start Drawing
 
 startDrawing:
   call setupDraw
@@ -128,6 +136,7 @@ setupDraw:
   int 10h     ; call bios service
   mov cx,160  ; x position = 160
   mov dx,100  ; y position = 100
+  mov al,4    ; red as default colour
   ret
   
 keyDrawLoop:
@@ -277,10 +286,11 @@ exitProgram:
 CR equ 13
 LF equ 10
 
-Num          db ?  
-OperationEx  db "operacion realizada:",CR,LF,"$"
-WelcomeMsg   db "Practica 1, Arqui 1",CR,LF,"1. Calculadora",CR,LF,"2. Dibujar",CR,LF,"3. Cargar Dibujado","$"
-NotNumError  db CR,LF,"esto no es un numero",CR,LF,"$"
+Num          DB ?  
+OperationEx  DB "Op Exec:",CR,LF,"$"
+WelcomeMsg   DB "Practica 1, Arqui 1",CR,LF,"1. Calculadora",CR,LF
+             DB "2. Dibujar",CR,LF,"3. Cargar Dibujado",CR,LF,"4. Salir","$"
+NotNumError  DB CR,LF,"No es un numero",CR,LF,"$"
 
 CreateErrorMessage DB "Error While Creating File $"
 OpenErrorMessage   DB "Error While Opening File $"
