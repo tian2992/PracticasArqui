@@ -101,7 +101,7 @@ startDrawing:
   
 
 fileOpenForWriting:
-  push ax     ; we preserve the original register values
+  push ax                ; we preserve the original register values
   push bx
   push cx
   push dx
@@ -130,6 +130,11 @@ fileOpenForWriting:
   ;mov al, 21h ; mode 100001
               ; 100 don't lock
               ; 001 write mode  
+              
+fileClose:
+  mov bx,[FileHandle] ; put file handle in bx 
+  mov ah,3Eh          ; function 3Eh - close a file
+  int 21h             ; call dos service
               
 setupDraw:
   mov ax,13   ; mode = 13h 
@@ -174,18 +179,19 @@ drawKeys:
   je  drawKeyDown
   jmp keyDrawLoop ;else, do the same again
 
-
-
 setColourRedKey:
   call setColourRed
+  call writeColourRed
   jmp drawKeys
 
 setColourBlueKey:
   call setColourBlue
+  call writeColourBlue
   jmp drawKeys
 
 setColourGreenKey:
   call setColourGreen
+  call writeColourGreen
   jmp drawKeys
 
 setColourRed:
@@ -200,22 +206,137 @@ setColourGreen:
   mov al,10
   ret
   
+writeUpMove:
+  push dx
+  push cx
+  push bx
+  push ax
+  
+  mov dx, UpToWrite     ; address of information to write 
+  call writeByteToFile  
+  
+  pop ax
+  pop bx
+  pop cx
+  pop dx
+  ret
+  
+writeDownMove:
+  push dx
+  push cx
+  push bx
+  push ax
+  
+  mov dx, DownToWrite  
+  call writeByteToFile  
+  
+  pop ax
+  pop bx
+  pop cx
+  pop dx
+  ret
+  
+writeLeftMove:
+  push dx
+  push cx
+  push bx
+  push ax
+  
+  mov dx, LeftToWrite 
+  call writeByteToFile  
+  
+  pop ax
+  pop bx
+  pop cx
+  pop dx
+  ret
+  
+writeRightMove:
+  push dx
+  push cx
+  push bx
+  push ax
+  
+  mov dx, RightToWrite
+  call writeByteToFile  
+  
+  pop ax
+  pop bx
+  pop cx
+  pop dx
+  ret
+  
+writeColourRed:
+  push dx
+  push cx
+  push bx
+  push ax
+  
+  mov dx, RtoWrite
+  call writeByteToFile  
+  
+  pop ax
+  pop bx
+  pop cx
+  pop dx
+  ret
+  
+writeColourGreen:
+  push dx
+  push cx
+  push bx
+  push ax
+  
+  mov dx, GtoWrite 
+  call writeByteToFile  
+  pop ax
+  pop bx
+  pop cx
+  pop dx
+  ret
+  
+writeColourBlue:
+  push dx
+  push cx
+  push bx
+  push ax
+  
+  mov dx, BtoWrite 
+  call writeByteToFile  
+  
+  pop ax
+  pop bx
+  pop cx
+  pop dx
+  ret
+  
+writeByteToFile:
+  mov bx, [FileHandle] ; file handle for file
+  mov cx,1             ; we're only writing one character
+  mov ah,40h           ; function 40h - write to file
+  int 21h              ; call dos service
+  ret
+
 ; ============ Specific Calls for Drawing with each Key
 
 drawKeyUp:
   call drawUp
+  call writeUpMove
   jmp keyDrawLoop
 
 drawKeyLeft:
   call drawLeft
+  call writeLeftMove
   jmp keyDrawLoop
   
 drawKeyDown:
   call drawDown
+  call writeDownMove
   jmp keyDrawLoop
   
 drawKeyRight:
   call drawRight
+  call writeRightMove
   jmp keyDrawLoop
 
 ; ============ Specific Draw Functions
