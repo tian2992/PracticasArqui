@@ -2,9 +2,41 @@ org 100h
 
 start:
   call setupDraw
+  call fileOpenForWriting
   jmp keyDrawLoop
+  
 
-
+fileOpenForWriting:
+  push ax     ; we preserve the original register values
+  push bx
+  push cx
+  push dx
+  
+  mov dx,FileName        ; filename in dx 
+  xor cx,cx              ; clear cx - make ordinary file
+  mov ah,3Ch             ; function 3Ch - create a file
+  int 21h                ; DOS interruption
+  jc createFileError     ; if the CFlag is on
+  
+  mov dx, FileName       ;
+  mov al,2               ; read & write
+  mov ah,3Dh             ; openFile
+  int 21h
+  jc openFileError
+  
+  mov [FileHandle], ax   ; copy the handle from ax to FileHandle
+  
+  pop dx                 ; restoring all register to previous conditions
+  pop cx
+  pop bx
+  pop ax
+  
+  ret
+  ;mov ah, 3Dh ; function to manage files
+  ;mov al, 21h ; mode 100001
+              ; 100 don't lock
+              ; 001 write mode  
+              
 setupDraw:
   mov ax,13   ; mode = 13h 
   int 10h     ; call bios service
@@ -128,13 +160,47 @@ drawRight:
   int 10h
   pop ax
   ret
+  
+createFileError: ; if there's an error creating the file
+  mov dx, CreateErrorMessage
+  mov ah,09h 
+  int 21h 
+  jmp exitError
+
+openFileError:  ; error opening file
+  mov dx, OpenErrorMessage
+  mov ah,09h 
+  int 21h 
+  jmp exitError
+  
+exitError:
+  mov ax,4C01h 
+  int 21h
 
 finishDraw:
   ;xor ax,ax   ; function 00h: readkey
   ;int 16h
-  
   mov ax,3    ; mode = 3
   int 10h     ; change graphic mode
+  jmp exitProgram
 
+exitProgram:
   mov ax,4C00h    ; exit to DOS
   int 21h
+
+CR equ 13
+LF equ 10
+
+CreateErrorMessage DB "Error While Creating File $"
+OpenErrorMessage   DB "Error While Opening File $"
+
+FileName     DB "C:\draw.txt",0 ; name of file to open 
+FileHandle   DW 0               ; to store file handle 
+
+RtoWrite     DB "r",0
+GtoWrite     DB "g",0
+BtoWrite     DB "b",0
+UpToWrite    DB "1",0
+RightToWrite DB "2",0
+DownToWrite  DB "3",0
+LeftToWrite  DB "4",0
